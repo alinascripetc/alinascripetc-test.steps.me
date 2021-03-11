@@ -29,36 +29,28 @@ const useStyles = makeStyles({
 
 function App() {
   const s = useStyles()
-  const [state, setState] = useState([])
-  const [commentsLimit, setCommentsLimit] = useState(20)
-  const [preloader, setPreloader] = useState(false)
   const portionSize = 20
+  const [comments, setComments] = useState([])
+  const [page, setPage] = useState(1)
+  const [preloader, setPreloader] = useState(false)
 
   const postComment = async (comment) => {
-    const response = await API.postComment(comment)
-    if (response.status === 200) {
-      getData()
-    }
+    const response = await API.postComment(comment);
+    const newComment = response.data;
+    setComments([...comments, ...newComment])
   }
 
-  const getData = async () => {
-    setPreloader(true)
-    const response = await API.getComments(commentsLimit)
-    setState(response)
-    setPreloader(false)
-    setCommentsLimit(commentsLimit + portionSize)
-  }
 
   const addMoreComment = async () => {
     setPreloader(true)
-    const response = await API.getComments(commentsLimit)
-    setState(response)
+    const response = await API.getComments(page, portionSize)
+    setComments([...comments, ...response.data])
     setPreloader(false)
-    setCommentsLimit(commentsLimit + portionSize)
+    setPage(page + 1)
   }
 
-  useEffect(async () => {
-    getData()
+  useEffect(() => {
+    addMoreComment()
   }, [])
 
   return (
@@ -76,7 +68,7 @@ function App() {
           loadMore={addMoreComment}
           hasMore={true || false}
         >
-          <Comments comments={state} />
+          <Comments comments={comments} />
         </InfiniteScroll>
         <Box className={s.preloader__container}>
           <Preloader preloader={preloader} />
